@@ -134,7 +134,10 @@ async def send_message_with_buttons(
 _CONFIRMATION_ACTIONS = {"CONFIRM", "WAIT", "CANCEL"}
 
 # Recognised bot commands
-_COMMANDS = {"/start", "/help", "/status"}
+_COMMANDS = {"/start", "/help", "/status", "/reset"}
+
+# Callback-query values for the reset confirmation flow
+_RESET_ACTIONS = {"RESET_CONFIRM", "RESET_CANCEL"}
 
 
 async def handle_update(update: dict) -> None:
@@ -173,6 +176,27 @@ async def handle_update(update: dict) -> None:
             await start_onboarding(chat_id)
             return
 
+        # 1b. /reset works at any point (even mid-onboarding)
+        if text and text.strip().lower() == "/reset":
+            from app.services.commands import handle_command  # type: ignore[import-untyped]
+
+            await handle_command(chat_id, user, "/reset")
+            return
+
+        # 1c. Reset confirmation callbacks
+        is_callback = "callback_query" in update
+        if is_callback and text in _RESET_ACTIONS:
+            from app.services.commands import (  # type: ignore[import-untyped]
+                handle_reset_cancel,
+                handle_reset_confirm,
+            )
+
+            if text == "RESET_CONFIRM":
+                await handle_reset_confirm(chat_id, user)
+            else:
+                await handle_reset_cancel(chat_id, user)
+            return
+
         # 2. User mid-onboarding
         if user.get("onboarding_step") and user["onboarding_step"] != OnboardingStep.COMPLETE:
             from app.services.onboarding import handle_onboarding_step  # type: ignore[import-untyped]
@@ -183,7 +207,6 @@ async def handle_update(update: dict) -> None:
         # From here on the user is fully onboarded.
 
         # 3. Handle callback queries for transfer confirmation
-        is_callback = "callback_query" in update
         if is_callback and text and text.upper() in _CONFIRMATION_ACTIONS:
             from app.services.transfer import handle_confirmation  # type: ignore[import-untyped]
 

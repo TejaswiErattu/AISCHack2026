@@ -79,6 +79,12 @@ async def update_profile(profile: RemittanceProfile) -> None:
     table.put_item(Item=_serialize(profile))
 
 
+async def delete_profile(profile_id: str) -> None:
+    """Delete a remittance profile by its ID."""
+    table = get_table("remittance_profiles")
+    table.delete_item(Key={"profile_id": profile_id})
+
+
 # ──── UserPreferences ────
 
 
@@ -99,6 +105,12 @@ async def get_preferences(user_id: str) -> UserPreferences | None:
 async def update_preferences(prefs: UserPreferences) -> None:
     table = get_table("user_preferences")
     table.put_item(Item=_serialize(prefs))
+
+
+async def delete_preferences(user_id: str) -> None:
+    """Delete user preferences by user ID."""
+    table = get_table("user_preferences")
+    table.delete_item(Key={"user_id": user_id})
 
 
 # ──── RateSnapshot ────
@@ -186,6 +198,17 @@ async def get_alert_state(user_id: str, corridor: str) -> AlertState | None:
 async def update_alert_state(state: AlertState) -> None:
     table = get_table("alert_states")
     table.put_item(Item=_serialize(state))
+
+
+async def delete_alert_states(user_id: str) -> None:
+    """Delete all alert states for a user."""
+    table = get_table("alert_states")
+    resp = table.scan(
+        FilterExpression="user_id = :uid",
+        ExpressionAttributeValues={":uid": user_id},
+    )
+    for item in resp.get("Items", []):
+        table.delete_item(Key={"user_id": item["user_id"], "corridor": item["corridor"]})
 
 
 async def mark_user_interaction(user_id: str) -> None:
