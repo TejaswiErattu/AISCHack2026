@@ -16,10 +16,11 @@ class BedrockClient:
     """Thin wrapper around AWS Bedrock Runtime for Claude model invocations."""
 
     def __init__(self) -> None:
-        self._client = boto3.client(
-            "bedrock-runtime",
-            region_name=settings.aws_region,
-        )
+        client_kwargs: dict = {"region_name": settings.aws_region}
+        if settings.aws_access_key_id and settings.aws_secret_access_key:
+            client_kwargs["aws_access_key_id"] = settings.aws_access_key_id
+            client_kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+        self._client = boto3.client("bedrock-runtime", **client_kwargs)
         self._model_id = settings.bedrock_model_id
 
     def _build_request_body(

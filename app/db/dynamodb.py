@@ -19,6 +19,9 @@ def get_dynamodb_resource():
         kwargs: dict = {"region_name": settings.aws_region}
         if settings.dynamodb_endpoint_url:
             kwargs["endpoint_url"] = settings.dynamodb_endpoint_url
+        if settings.aws_access_key_id and settings.aws_secret_access_key:
+            kwargs["aws_access_key_id"] = settings.aws_access_key_id
+            kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
         _dynamodb_resource = boto3.resource("dynamodb", **kwargs)
     return _dynamodb_resource
 

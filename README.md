@@ -21,6 +21,8 @@ source venv/bin/activate
 pip install -e ".[dev]"
 ```
 
+> **Note:** Activate the virtual environment (`source venv/bin/activate`) before running any command in this README — including table provisioning, scripts, the server, and tests.
+
 ### 2. Configure environment
 
 Create a `.env` file in the project root and fill in your credentials:
@@ -57,7 +59,17 @@ DYNAMODB_ENDPOINT_URL=http://localhost:8000
 python -m scripts.setup_dynamodb
 ```
 
-### 4. Set up Telegram webhook
+### 4. Create a Telegram bot
+
+1. Open Telegram and search for **@BotFather**
+2. Send `/newbot`
+3. Choose a **display name** (e.g. "RemitAgent")
+4. Choose a **username** — must end in `bot` (e.g. `RemitAgentBot`)
+5. BotFather replies with a **bot token** — copy it into your `.env` as `TELEGRAM_BOT_TOKEN`
+
+> Already have a bot? Send `/mybots` to @BotFather to see your existing bots and tokens.
+
+### 5. Set up Telegram webhook
 
 Register your webhook URL with Telegram (replace with your public URL or use [ngrok](https://ngrok.com/) for local dev):
 
@@ -65,12 +77,19 @@ Register your webhook URL with Telegram (replace with your public URL or use [ng
 curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://<YOUR_DOMAIN>/webhook/telegram"
 ```
 
+`<YOUR_DOMAIN>` depends on your setup:
+- **Local development:** the HTTPS URL from ngrok (e.g. `a1b2c3d4.ngrok-free.app`)
+- **AWS Lambda:** your API Gateway or CloudFront domain
+
 For local development with ngrok:
 
 ```bash
 ngrok http 8080
-# Then set the webhook to the ngrok HTTPS URL
+# Copy the https:// URL ngrok prints, then register it:
+curl "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://<NGROK_URL>/webhook/telegram"
 ```
+
+> **Note:** Free ngrok URLs change on every restart, so you need to re-register the webhook each time.
 
 ## Running the App
 
@@ -91,6 +110,29 @@ If developing locally with ngrok, start it in a separate terminal:
 ```bash
 ngrok http 8080
 ```
+
+## Using the Bot
+
+Once the server is running and the webhook is registered, open Telegram and search for your bot by its username (e.g. `@RemitAgentBot`).
+
+### Onboarding
+
+Send any message to start. The bot walks you through 5 setup questions:
+
+1. **Language** — e.g. "English"
+2. **Financial literacy level** — "beginner", "intermediate", or "advanced"
+3. **Sender country** — where you send from (e.g. "US")
+4. **Recipient country** — where you send to (e.g. "India")
+5. **Typical transfer amount** — e.g. "500"
+
+The bot then shows a profile summary. Reply **yes** to confirm, or edit inline (e.g. "change amount to 1000").
+
+### After onboarding
+
+- The bot **monitors FX rates** for your corridor and sends alerts when conditions are favorable
+- When a transfer is recommended, tap **Confirm**, **Wait**, or **Cancel**
+- Update preferences anytime — e.g. "set threshold 2%", "change level to advanced"
+- Commands: `/start`, `/help`, `/status`
 
 ## Demo Mode
 
