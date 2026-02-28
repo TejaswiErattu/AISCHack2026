@@ -24,16 +24,14 @@ class Settings(BaseSettings):
 
     # Wise
     wise_api_base_url: str = "https://api.sandbox.transferwise.tech"
-    wise_client_id: str = ""
-    wise_client_secret: str = ""
-    wise_redirect_uri: str = "http://localhost:8000/wise/callback"
+    wise_api_token: str = ""  # Personal API token from sandbox settings
 
     # App
     app_env: str = "development"
     log_level: str = "INFO"
     rate_check_interval_minutes: int = 15
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
     @property
     def is_dev(self) -> bool:

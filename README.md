@@ -31,8 +31,7 @@ Create a `.env` file in the project root and fill in your credentials:
 | `AWS_SECRET_ACCESS_KEY` | Yes | AWS IAM secret key |
 | `BEDROCK_MODEL_ID` | Yes | Bedrock model ID (default: `anthropic.claude-3-5-sonnet-20241022-v2:0`) |
 | `FX_API_KEY` | Yes | ExchangeRate-API key |
-| `WISE_CLIENT_ID` | No | Wise sandbox client ID |
-| `WISE_CLIENT_SECRET` | No | Wise sandbox client secret |
+| `WISE_API_TOKEN` | No | Wise sandbox personal API token |
 | `DYNAMODB_ENDPOINT_URL` | No | Set to `http://localhost:8000` for DynamoDB Local |
 
 ### 3. Provision DynamoDB tables

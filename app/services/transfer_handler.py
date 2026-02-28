@@ -96,13 +96,22 @@ async def _handle_confirm(user_id: str, chat_id: str) -> None:
     await crud.create_transfer(transfer)
 
     # Try Wise sandbox execution
-    # Note: In a real flow, we'd get the Wise access token from OAuth
-    wise_access_token = ""  # TODO: retrieve from user's stored OAuth token
-    quote = await create_quote(wise_access_token, base_currency, target_currency, amount)
+    from app.services.wise_adapter import is_configured
 
-    if quote:
+    if not is_configured():
+        # Fall back to mock provider
+        from app.services.mock_wise import create_quote as mock_quote, create_transfer as mock_create
+        quote = await mock_quote(base_currency, target_currency, amount)
         quote_id = quote.get("id", "")
-        wise_transfer = await create_transfer(wise_access_token, quote_id, "")
+        wise_transfer = await mock_create(quote_id)
+    else:
+        quote = await create_quote(base_currency, target_currency, amount)
+        wise_transfer = None
+        if quote:
+            quote_id = quote.get("id", "")
+            wise_transfer = await create_transfer(quote_id, 0)
+
+    if wise_transfer:
         if wise_transfer:
             transfer.provider_tx_id = str(wise_transfer.get("id", ""))
             transfer.status = TransferStatus.CREATED
