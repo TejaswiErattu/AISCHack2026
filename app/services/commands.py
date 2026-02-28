@@ -2,7 +2,7 @@
 
 import logging
 
-from app.models.schemas import OnboardingStep
+from app.models.schemas import OnboardingStep, User
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,7 @@ RESET_CONFIRM = "RESET_CONFIRM"
 RESET_CANCEL = "RESET_CANCEL"
 
 
-async def handle_command(chat_id: str, user: dict, command: str) -> None:
+async def handle_command(chat_id: str, user: User, command: str) -> None:
     """Dispatch a recognised bot command to the appropriate handler."""
     handlers = {
         "/start": _handle_start,
@@ -28,7 +28,7 @@ async def handle_command(chat_id: str, user: dict, command: str) -> None:
         await send_message(chat_id, "Unknown command. Try /help for a list of commands.")
 
 
-async def _handle_start(chat_id: str, user: dict) -> None:
+async def _handle_start(chat_id: str, user: User) -> None:
     from app.services.telegram import send_message
 
     await send_message(
@@ -37,7 +37,7 @@ async def _handle_start(chat_id: str, user: dict) -> None:
     )
 
 
-async def _handle_help(chat_id: str, user: dict) -> None:
+async def _handle_help(chat_id: str, user: User) -> None:
     from app.services.telegram import send_message
 
     await send_message(
@@ -52,18 +52,18 @@ async def _handle_help(chat_id: str, user: dict) -> None:
     )
 
 
-async def _handle_status(chat_id: str, user: dict) -> None:
+async def _handle_status(chat_id: str, user: User) -> None:
     from app.services.telegram import send_message
 
-    step = user.get("onboarding_step", "unknown")
-    lang = user.get("language", "en")
+    step = user.onboarding_step
+    lang = user.language
     await send_message(
         chat_id,
         f"*Your status:*\nLanguage: {lang}\nOnboarding: {step}",
     )
 
 
-async def _handle_reset(chat_id: str, user: dict) -> None:
+async def _handle_reset(chat_id: str, user: User) -> None:
     """Send a confirmation prompt with YES/NO buttons."""
     from app.services.telegram import send_message_with_buttons
 
@@ -84,7 +84,7 @@ async def _handle_reset(chat_id: str, user: dict) -> None:
     )
 
 
-async def handle_reset_confirm(chat_id: str, user: dict) -> None:
+async def handle_reset_confirm(chat_id: str, user: User) -> None:
     """Perform the actual reset: delete profile, prefs, alerts, restart onboarding."""
     from app.db.crud import (
         create_preferences,
@@ -99,10 +99,7 @@ async def handle_reset_confirm(chat_id: str, user: dict) -> None:
     from app.llm.fallbacks import FallbackTemplates
     from app.services.telegram import send_message
 
-    user_id = user.get("user_id")
-    if not user_id:
-        await send_message(chat_id, "Something went wrong. Please try again.")
-        return
+    user_id = user.user_id
 
     # Delete profile
     profile = await get_profile_by_user(user_id)
@@ -133,7 +130,7 @@ async def handle_reset_confirm(chat_id: str, user: dict) -> None:
     await send_message(chat_id, question)
 
 
-async def handle_reset_cancel(chat_id: str, user: dict) -> None:
+async def handle_reset_cancel(chat_id: str, user: User) -> None:
     """Cancel the reset — no changes made."""
     from app.services.telegram import send_message
 

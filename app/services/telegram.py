@@ -161,13 +161,11 @@ async def handle_update(update: dict) -> None:
 
     try:
         # --- lazy imports to avoid circular dependencies ---
-        from app.db.dynamodb import get_table  # noqa: F811
+        from app.db.crud import get_user_by_telegram_id
         from app.models.schemas import OnboardingStep
 
         # Look up user
-        users_table = get_table("users")
-        resp = users_table.get_item(Key={"telegram_chat_id": chat_id})
-        user = resp.get("Item")
+        user = await get_user_by_telegram_id(chat_id)
 
         # 1. New user — kick off onboarding
         if user is None:
@@ -198,7 +196,7 @@ async def handle_update(update: dict) -> None:
             return
 
         # 2. User mid-onboarding
-        if user.get("onboarding_step") and user["onboarding_step"] != OnboardingStep.COMPLETE:
+        if user.onboarding_step and user.onboarding_step != OnboardingStep.COMPLETE:
             from app.services.onboarding import handle_onboarding_step  # type: ignore[import-untyped]
 
             await handle_onboarding_step(chat_id, user, text)
