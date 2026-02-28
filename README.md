@@ -21,11 +21,7 @@ pip install -e ".[dev]"
 
 ### 2. Configure environment
 
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your credentials:
+Create a `.env` file in the project root and fill in your credentials:
 
 | Variable | Required | Description |
 |---|---|---|
