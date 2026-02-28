@@ -13,9 +13,11 @@ Messaging-first AI agent that monitors FX rates, optimizes transfer timing, and 
 
 ## First-Time Setup
 
-### 1. Install dependencies
+### 1. Create a virtual environment and install dependencies
 
 ```bash
+python3 -m venv venv
+source venv/bin/activate
 pip install -e ".[dev]"
 ```
 
