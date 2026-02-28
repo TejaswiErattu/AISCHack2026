@@ -11,7 +11,7 @@ Messaging-first AI agent that monitors FX rates, optimizes transfer timing, and 
 - Wise sandbox credentials (optional — mock provider available)
 - DynamoDB (AWS-hosted or [DynamoDB Local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html) for development)
 
-## Quick Start
+## First-Time Setup
 
 ### 1. Install dependencies
 
@@ -70,7 +70,9 @@ ngrok http 8080
 # Then set the webhook to the ngrok HTTPS URL
 ```
 
-### 5. Run the app
+## Running the App
+
+Start the server:
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
@@ -80,6 +82,12 @@ The API will be available at `http://localhost:8080`. Verify with:
 
 ```bash
 curl http://localhost:8080/health
+```
+
+If developing locally with ngrok, start it in a separate terminal:
+
+```bash
+ngrok http 8080
 ```
 
 ## Demo Mode

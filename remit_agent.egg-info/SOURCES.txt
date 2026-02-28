@@ -30,3 +30,4 @@ remit_agent.egg-info/SOURCES.txt
 remit_agent.egg-info/dependency_links.txt
 remit_agent.egg-info/requires.txt
 remit_agent.egg-info/top_level.txt
+tests/test_core.py
