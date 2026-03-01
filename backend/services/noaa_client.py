@@ -25,7 +25,7 @@ SEASONAL_PRECIP_BASELINE_MM = 80.0  # approximate monthly norm in mm
 # Caches
 _station_cache: dict[tuple[float, float], list[str]] = {}  # (lat,lng) -> [stationId, ...]
 _data_cache: dict[str, tuple[float, dict]] = {}  # cache_key -> (timestamp, normalized_data)
-DATA_CACHE_TTL = 300  # 5 minutes
+DATA_CACHE_TTL = 3600  # 60 minutes — weather data for ag-risk doesn't change meaningfully within an hour
 
 
 async def _find_nearby_stations(

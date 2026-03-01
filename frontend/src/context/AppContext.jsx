@@ -33,6 +33,10 @@ export const AppProvider = ({ children }) => {
   // Debounce ref for simulator updates
   const debounceRef = useRef(null);
 
+  // Per-region data cache: regionId -> {climate, financial, narrative, timestamp}
+  const regionCacheRef = useRef({});
+  const REGION_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
   // --- Fetch regions on mount ---
   useEffect(() => {
     const loadRegions = async () => {
@@ -124,14 +128,26 @@ export const AppProvider = ({ children }) => {
     if (!selectedRegion) return;
 
     const loadRegionData = async () => {
-      setIsLoading(true);
-
       const regionId = selectedRegion.region_id || selectedRegion.id;
 
-      // Fetch core data
-      const climate = await api.getClimate(regionId, setIsDemoMode);
-      const financial = await api.getFinancial(regionId, setIsDemoMode);
-      const narrativeResult = await api.getNarrative(regionId, activePanel, setIsDemoMode);
+      // Check per-region cache first
+      const cached = regionCacheRef.current[regionId];
+      if (cached && Date.now() - cached.timestamp < REGION_CACHE_TTL) {
+        setClimateData(cached.climate);
+        setFinancialOutputs(cached.financial);
+        setNarratives(prev => ({ ...prev, [activePanel]: cached.narrative }));
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+
+      // Fetch all data in parallel
+      const [climate, financial, narrativeResult] = await Promise.all([
+        api.getClimate(regionId, setIsDemoMode),
+        api.getFinancial(regionId, setIsDemoMode),
+        api.getNarrative(regionId, activePanel, setIsDemoMode),
+      ]);
 
       // Unwrap narrative: backend returns {panel, narrative}, mock returns plain string
       const narrativeText = narrativeResult?.narrative ?? narrativeResult;
@@ -140,6 +156,14 @@ export const AppProvider = ({ children }) => {
       if (isDemoMode) {
         await new Promise(resolve => setTimeout(resolve, 800));
       }
+
+      // Store in per-region cache
+      regionCacheRef.current[regionId] = {
+        climate,
+        financial,
+        narrative: narrativeText,
+        timestamp: Date.now(),
+      };
 
       setClimateData(climate);
       setFinancialOutputs(financial);

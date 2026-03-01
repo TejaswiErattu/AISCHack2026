@@ -1,5 +1,7 @@
+import hashlib
 import json
 import os
+import time as _time
 from contextlib import asynccontextmanager
 
 import boto3
@@ -17,6 +19,10 @@ from backend.routes.narrative import router as narrative_router
 load_dotenv()
 
 bedrock = boto3.client("bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"))
+
+# Proposal response cache: hash(request_body) -> (timestamp, response)
+_proposal_cache: dict[str, tuple[float, dict]] = {}
+_PROPOSAL_CACHE_TTL = 600  # 10 minutes
 
 
 @asynccontextmanager
@@ -73,6 +79,16 @@ async def chat(request: dict = Body(...)):
 
 @app.post("/region/{region_id}/proposal")
 async def generate_proposal(region_id: str, request: dict = Body(...)):
+    # Check proposal cache by hashing the request body
+    cache_key = hashlib.sha256(
+        json.dumps({"region_id": region_id, **request}, sort_keys=True).encode()
+    ).hexdigest()
+
+    if cache_key in _proposal_cache:
+        ts, cached_response = _proposal_cache[cache_key]
+        if _time.time() - ts < _PROPOSAL_CACHE_TTL:
+            return cached_response
+
     try:
         body = json.dumps({
             "anthropic_version": "bedrock-2023-05-31",
@@ -99,7 +115,9 @@ Include: executive summary, risk assessment, recommended terms, conditions, and 
             body=body,
         )
         result = json.loads(response["body"].read())
-        return {"proposal": result["content"][0]["text"]}
+        response_data = {"proposal": result["content"][0]["text"]}
+        _proposal_cache[cache_key] = (_time.time(), response_data)
+        return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
