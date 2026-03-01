@@ -37,6 +37,8 @@ Task Management
 4. Explain Changes: High-level summary at each step
 5. Document Results: Add review section to tasks/todo.md
 6. Capture Lessons: Update tasks/lessons.md after corrections
+7. Transparency: For every subtask, explain in detail WHAT you are implementing and WHY before writing code. The user should be able to follow along with every decision — file names, data structures, formulas, design choices.
+8. Gate on Approval: After completing each subtask (code + passing tests), STOP and confirm with the user before moving on to the next subtask. Never auto-advance.
 
 Core Principles
 * Simplicity First: Make every change as simple as possible. Impact minimal code.
