@@ -2,8 +2,13 @@
 
 Fetches recent temperature and precipitation data, normalizes to our index scales.
 Returns None on any failure — the orchestrator falls back to mock data.
+
+Uses a two-step approach:
+  1. Find nearby GHCND stations via /stations?extent=...  (cached indefinitely)
+  2. Fetch data for those stations via /data?stationid=... (cached 5 minutes)
 """
 import logging
+import time as _time
 from datetime import datetime, timedelta
 
 import httpx
@@ -11,11 +16,70 @@ import httpx
 logger = logging.getLogger(__name__)
 
 NOAA_BASE_URL = "https://www.ncdc.noaa.gov/cdo-web/api/v2"
-TIMEOUT_SECONDS = 5.0
+TIMEOUT_SECONDS = 15.0
 
 # Seasonal baseline assumptions for normalization
 SEASONAL_TEMP_BASELINE_C = 20.0  # approximate summer norm in °C
 SEASONAL_PRECIP_BASELINE_MM = 80.0  # approximate monthly norm in mm
+
+# Caches
+_station_cache: dict[tuple[float, float], list[str]] = {}  # (lat,lng) -> [stationId, ...]
+_data_cache: dict[str, tuple[float, dict]] = {}  # cache_key -> (timestamp, normalized_data)
+DATA_CACHE_TTL = 300  # 5 minutes
+
+
+async def _find_nearby_stations(
+    lat: float, lng: float, api_key: str
+) -> list[str]:
+    """Find GHCND stations near a lat/lng using the stations endpoint.
+
+    Returns a list of station IDs, or empty list on failure.
+    Results are cached indefinitely (stations don't move).
+    """
+    cache_key = (round(lat, 2), round(lng, 2))
+    if cache_key in _station_cache:
+        return _station_cache[cache_key]
+
+    params = {
+        "datasetid": "GHCND",
+        "extent": f"{lat - 1.0},{lng - 1.0},{lat + 1.0},{lng + 1.0}",
+        "limit": 25,
+        "sortfield": "datacoverage",
+        "sortorder": "desc",
+    }
+    headers = {"token": api_key}
+
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
+            resp = await client.get(
+                f"{NOAA_BASE_URL}/stations", params=params, headers=headers
+            )
+            if resp.status_code != 200:
+                logger.warning(f"NOAA stations API returned {resp.status_code}")
+                return []
+
+            data = resp.json()
+            results = data.get("results", [])
+            # Filter to stations with recent data and decent coverage
+            station_ids = [
+                r["id"]
+                for r in results
+                if r.get("datacoverage", 0) > 0.3
+                and r.get("maxdate", "") >= "2024-01-01"
+            ]
+            if not station_ids:
+                # Fallback: use any station returned
+                station_ids = [r["id"] for r in results[:5]]
+
+            _station_cache[cache_key] = station_ids
+            logger.info(
+                f"Found {len(station_ids)} NOAA stations near ({lat}, {lng})"
+            )
+            return station_ids
+
+    except (httpx.TimeoutException, httpx.RequestError, Exception) as e:
+        logger.warning(f"NOAA stations lookup failed: {e}")
+        return []
 
 
 async def fetch_noaa_data(lat: float, lng: float, api_key: str) -> dict | None:
@@ -31,8 +95,28 @@ async def fetch_noaa_data(lat: float, lng: float, api_key: str) -> dict | None:
         logger.warning("No NOAA API key provided, skipping NOAA fetch")
         return None
 
+    # Check data cache first
+    cache_key = f"{round(lat, 2)},{round(lng, 2)}"
+    if cache_key in _data_cache:
+        ts, cached_data = _data_cache[cache_key]
+        if _time.time() - ts < DATA_CACHE_TTL:
+            logger.info(f"Using cached NOAA data for ({lat}, {lng})")
+            return cached_data
+
+    # Step 1: Find nearby stations
+    station_ids = await _find_nearby_stations(lat, lng, api_key)
+    if not station_ids:
+        logger.warning(f"No NOAA stations found near ({lat}, {lng})")
+        return None
+
+    # Step 2: Fetch data for those stations
     end_date = datetime.now()
     start_date = end_date - timedelta(days=30)
+
+    # Use up to 5 stations to get a good sample of all data types
+    station_filter = "&".join(
+        f"stationid={sid}" for sid in station_ids[:5]
+    )
 
     params = {
         "datasetid": "GHCND",
@@ -40,21 +124,28 @@ async def fetch_noaa_data(lat: float, lng: float, api_key: str) -> dict | None:
         "startdate": start_date.strftime("%Y-%m-%d"),
         "enddate": end_date.strftime("%Y-%m-%d"),
         "units": "metric",
-        "limit": 100,
+        "limit": 200,
         "sortfield": "date",
         "sortorder": "desc",
-        # Use bounding box around the lat/lng (±0.5 degree)
-        "extent": f"{lat - 0.5},{lng - 0.5},{lat + 0.5},{lng + 0.5}",
     }
+    # Add station IDs individually (httpx handles repeated keys)
+    for sid in station_ids[:3]:
+        # httpx doesn't support repeated query keys via dict,
+        # so we'll build the URL manually
+        pass
+
     headers = {"token": api_key}
 
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
-            resp = await client.get(
-                f"{NOAA_BASE_URL}/data",
-                params=params,
-                headers=headers,
-            )
+            # Build URL with repeated stationid params
+            base_url = f"{NOAA_BASE_URL}/data"
+            query_parts = [f"{k}={v}" for k, v in params.items()]
+            for sid in station_ids[:5]:
+                query_parts.append(f"stationid={sid}")
+            full_url = f"{base_url}?{'&'.join(query_parts)}"
+
+            resp = await client.get(full_url, headers=headers)
 
             if resp.status_code == 429:
                 logger.warning("NOAA API rate limited (429)")
@@ -65,7 +156,13 @@ async def fetch_noaa_data(lat: float, lng: float, api_key: str) -> dict | None:
                 return None
 
             data = resp.json()
-            return _normalize_noaa_response(data)
+            result = _normalize_noaa_response(data)
+
+            # Cache successful results
+            if result:
+                _data_cache[cache_key] = (_time.time(), result)
+
+            return result
 
     except httpx.TimeoutException:
         logger.warning("NOAA API request timed out")

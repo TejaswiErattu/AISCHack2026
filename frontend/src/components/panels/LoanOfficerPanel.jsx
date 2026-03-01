@@ -4,11 +4,36 @@ import { useCountUp } from '../../hooks/useCountUp';
 import StressGauge from '../shared/StressGauge';
 import AINarrative from '../shared/AINarrative';
 
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+const computeFactors = (climate) => {
+  if (!climate) return [];
+  const heat = clamp((climate.temperature_anomaly + 3) / 8 * 100, 0, 100);
+  const drought = clamp(climate.drought_index, 0, 100);
+  const rain = clamp(Math.abs(climate.rainfall_anomaly) / 80 * 100, 0, 100);
+  const ndvi = clamp(100 - (climate.ndvi_score ?? 50), 0, 100);
+  const soil = clamp(100 - (climate.soil_moisture ?? 50), 0, 100);
+
+  const weighted = [
+    { label: "Heat Stress Index", val: heat, w: 0.30, color: "#EF4444" },
+    { label: "Drought Index",     val: drought, w: 0.25, color: "#F59E0B" },
+    { label: "Rainfall Anomaly",  val: rain, w: 0.20, color: "#3B82F6" },
+    { label: "Vegetation (NDVI)", val: ndvi, w: 0.15, color: "#10B981" },
+  ];
+  const totalStress = weighted.reduce((s, f) => s + f.w * f.val, 0) + 0.10 * soil;
+
+  return weighted.map(f => ({
+    ...f,
+    pct: totalStress > 0 ? Math.round((f.w * f.val) / totalStress * 100) : 0,
+  }));
+};
+
 const LoanOfficerPanel = () => {
   const { financialOutputs, climateData, narratives, isLoading } = useContext(AppContext);
-  
+
   const animatedRate = useCountUp(financialOutputs?.interest_rate ?? 0, 800);
   const animatedPD = useCountUp((financialOutputs?.probability_of_default ?? 0) * 100, 800);
+  const factors = computeFactors(climateData);
 
   if (isLoading) return <LoanOfficerSkeleton />;
 
@@ -65,10 +90,9 @@ const LoanOfficerPanel = () => {
       <div className="mt-6 px-3">
         <div className="text-[11px] text-[#475569] mb-2 border-b border-[#1a1a1a] pb-1">RISK_FACTOR_CONTRIBUTION</div>
         <div className="space-y-1 text-[11px]">
-          <FactorRow label="Heat Stress Index" val="67.3" pct={45} color="#EF4444" />
-          <FactorRow label="Drought Index" val="54.1" pct={32} color="#F59E0B" />
-          <FactorRow label="Rainfall Anomaly" val="41.0" pct={15} color="#3B82F6" />
-          <FactorRow label="Vegetation (NDVI)" val="52.0" pct={8} color="#10B981" />
+          {factors.map(f => (
+            <FactorRow key={f.label} label={f.label} val={f.val.toFixed(1)} pct={f.pct} color={f.color} />
+          ))}
         </div>
       </div>
 

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.models.database import get_db
-from backend.models.models import Region
+from backend.models.models import Region, ClimateSnapshot
 from backend.models.schemas import RegionResponse, ClimateResponse, StressResponse
 from backend.services.climate_data import get_climate_data
 from backend.services.climate_engine import compute_yield_stress, compute_stress_breakdown
@@ -21,18 +21,16 @@ def _get_region_or_404(region_id: str, db: Session) -> Region:
 
 @router.get("/regions", response_model=list[RegionResponse])
 async def list_regions(db: Session = Depends(get_db)):
-    """List all selectable US agricultural regions with computed stress scores."""
+    """List all selectable US agricultural regions with baseline stress scores.
+
+    Uses pre-computed baseline stress from the database for fast response.
+    Live NOAA-based stress is computed per-region on the /region/{id}/climate endpoint.
+    """
     regions = db.query(Region).all()
     result = []
     for region in regions:
-        climate = await get_climate_data(region.region_id, region.lat, region.lng)
-        stress = compute_yield_stress(
-            climate["temperature_anomaly"],
-            climate["drought_index"],
-            climate["rainfall_anomaly"],
-            climate["ndvi_score"],
-            climate["soil_moisture"],
-        )
+        snapshot = db.query(ClimateSnapshot).filter_by(region_id=region.region_id).first()
+        stress = snapshot.yield_stress_score if snapshot else None
         result.append(RegionResponse(
             region_id=region.region_id,
             name=region.name,

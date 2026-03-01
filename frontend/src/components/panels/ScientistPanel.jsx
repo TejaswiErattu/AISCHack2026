@@ -1,16 +1,17 @@
-import React, { useMemo } from 'react';
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, ReferenceLine 
+import React, { useMemo, useContext } from 'react';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
-import { MOCK_FINANCIAL, MOCK_CLIMATE, MOCK_NARRATIVES } from '../../data/mockData';
 import { useCountUp } from '../../hooks/useCountUp';
 import AINarrative from '../shared/AINarrative';
+import { AppContext } from '../../context/AppContext';
 
-const ScientistPanel = ({ 
-  climateData = MOCK_CLIMATE, 
-  narrative = MOCK_NARRATIVES.scientist 
-}) => {
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+const ScientistPanel = () => {
+  const { climateData, narratives } = useContext(AppContext);
+  const narrative = narratives?.scientist;
   // Generate 14 days of historical data showing a declining trend
   const chartData = useMemo(() => {
     return Array.from({ length: 14 }).map((_, i) => ({
@@ -20,12 +21,18 @@ const ScientistPanel = ({
     }));
   }, []);
 
+  const heatStress = clamp(((climateData?.temperature_anomaly ?? 0) + 3) / 8 * 100, 0, 100);
+  const drought = clamp(climateData?.drought_index ?? 0, 0, 100);
+  const rainfallStress = clamp(Math.abs(climateData?.rainfall_anomaly ?? 0) / 80 * 100, 0, 100);
+  const ndviDeficit = clamp(100 - (climateData?.ndvi_score ?? 50), 0, 100);
+  const soilDeficit = clamp(100 - (climateData?.soil_moisture ?? 50), 0, 100);
+
   const indices = [
-    { label: 'Heat Stress Index', value: 67.3, unit: '/100' },
-    { label: 'Drought Index', value: 54.1, unit: '/100' },
-    { label: 'Rainfall Anomaly', value: -34, unit: '%' },
-    { label: 'NDVI Health Score', value: 48, unit: '/100' },
-    { label: 'Soil Moisture Deficit', value: 31, unit: '/100' },
+    { label: 'Heat Stress Index', value: heatStress, unit: '/100' },
+    { label: 'Drought Index', value: drought, unit: '/100' },
+    { label: 'Rainfall Anomaly', value: rainfallStress, unit: '/100' },
+    { label: 'NDVI Health Score', value: climateData?.ndvi_score ?? 0, unit: '/100' },
+    { label: 'Soil Moisture', value: climateData?.soil_moisture ?? 0, unit: '/100' },
   ];
 
   return (
@@ -57,11 +64,11 @@ const ScientistPanel = ({
               </tr>
             </thead>
             <tbody className="text-text-secondary">
-              <FormulaRow label="Heat Stress" weight="0.30" val="67.3" contrib="20.2" />
-              <FormulaRow label="Drought Index" weight="0.25" val="54.1" contrib="13.5" />
-              <FormulaRow label="Rainfall Anom" weight="0.20" val="41.0" contrib="8.2" />
-              <FormulaRow label="NDVI Health" weight="0.15" val="52.0" contrib="7.8" />
-              <FormulaRow label="Soil Moisture" weight="0.10" val="38.5" contrib="3.9" />
+              <FormulaRow label="Heat Stress" weight="0.30" val={heatStress.toFixed(1)} contrib={(0.30 * heatStress).toFixed(1)} />
+              <FormulaRow label="Drought Index" weight="0.25" val={drought.toFixed(1)} contrib={(0.25 * drought).toFixed(1)} />
+              <FormulaRow label="Rainfall Anom" weight="0.20" val={rainfallStress.toFixed(1)} contrib={(0.20 * rainfallStress).toFixed(1)} />
+              <FormulaRow label="NDVI Deficit" weight="0.15" val={ndviDeficit.toFixed(1)} contrib={(0.15 * ndviDeficit).toFixed(1)} />
+              <FormulaRow label="Soil Deficit" weight="0.10" val={soilDeficit.toFixed(1)} contrib={(0.10 * soilDeficit).toFixed(1)} />
               <tr className="border-t border-accent-primary/30 text-accent-primary font-bold">
                 <td className="py-3">COMPOSITE SCORE</td>
                 <td colSpan="2"></td>
