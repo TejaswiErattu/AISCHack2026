@@ -6,7 +6,7 @@ import AINarrative from '../shared/AINarrative';
 const FarmerPanel = () => {
   const { financialOutputs, climateData, narratives, isLoading } = useContext(AppContext);
   const animatedRate = useCountUp(financialOutputs.interest_rate, 800);
-  const isRateHigher = financialOutputs.delta_from_baseline > 0;
+  const isRateHigher = (financialOutputs?.delta_from_baseline ?? 0) > 0;
 
   // Logic to translate raw data into human sentences
   const getImpactFactors = () => {

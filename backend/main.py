@@ -8,6 +8,7 @@ from backend.seed import seed_database
 from backend.routes.regions import router as regions_router
 from backend.routes.financial import router as financial_router
 from backend.routes.simulation import router as simulation_router
+from backend.routes.narrative import router as narrative_router
 
 
 @asynccontextmanager
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(regions_router)
 app.include_router(financial_router)
 app.include_router(simulation_router)
+app.include_router(narrative_router)
 
 
 @app.get("/health")

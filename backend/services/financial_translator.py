@@ -47,9 +47,22 @@ def translate_financial(
     # 4. Repayment flexibility (inverse of stress)
     repayment_flexibility = _clamp(100 - stress, 0, 100)
 
+    # 5. Rate floor (stress=0 rate) and ceiling (stress=100 rate)
+    pd_floor = base_pd + (0 / 100) * 0.25
+    rate_floor = _clamp(base_rate + (pd_floor * 0.08 * 100), 3.0, 15.0)
+
+    pd_ceiling = base_pd + (100 / 100) * 0.25
+    rate_ceiling = _clamp(base_rate + (pd_ceiling * 0.08 * 100), 3.0, 15.0)
+
+    # 6. Repayment months (baseline 36, increases with stress)
+    repayment_months = int(_clamp(36 + (stress / 100) * 24, 36, 60))
+
     return {
         "interest_rate": round(interest_rate, 2),
         "probability_of_default": round(pd, 4),
         "insurance_premium": round(insurance_premium, 2),
         "repayment_flexibility": round(repayment_flexibility, 2),
+        "rate_floor": round(rate_floor, 2),
+        "rate_ceiling": round(rate_ceiling, 2),
+        "repayment_months": repayment_months,
     }

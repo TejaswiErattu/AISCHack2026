@@ -14,7 +14,7 @@ const ClimateSimulator = () => {
   } = useContext(AppContext);
 
   // Animate the simulation impact values
-  const animatedImpact = useCountUp(financialOutputs.delta_from_baseline, 400);
+  const animatedImpact = useCountUp(financialOutputs?.delta_from_baseline ?? 0, 400);
 
   return (
     <div className="h-[140px] w-full bg-background-secondary border-t border-border px-6 py-4 flex items-center gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-[3000]">
@@ -69,7 +69,7 @@ const ClimateSimulator = () => {
           <div className="flex justify-between items-baseline">
             <span className="text-[11px] text-text-secondary">Stress Score</span>
             <span className="font-mono text-[14px] font-bold text-accent-danger">
-              {climateData.yield_stress_score} → {Math.round(climateData.yield_stress_score + (animatedImpact * 10))}
+              {(climateData?.yield_stress_score ?? 0).toFixed(1)} → {Math.round((climateData?.yield_stress_score ?? 0) + (animatedImpact * 10))}
             </span>
           </div>
           <div className="flex justify-between items-baseline">

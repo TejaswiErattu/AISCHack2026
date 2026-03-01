@@ -1,7 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { MapContainer, TileLayer, ZoomControl, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MOCK_REGIONS } from '../../data/regions';
 import RegionMarker from './RegionMarker';
 import OverlayToggles from './OverlayToggles';
 import { AppContext } from '../../context/AppContext';
@@ -29,7 +28,7 @@ const MouseTracker = ({ onMove }) => {
 };
 
 const TerraMap = () => {
-  const { activeOverlays, selectedRegion } = useContext(AppContext);
+  const { activeOverlays, selectedRegion, regions } = useContext(AppContext);
   const [tileMode, setTileMode] = useState('dark');
   const [hoverCoords, setHoverCoords] = useState(null);
 
@@ -39,7 +38,7 @@ const TerraMap = () => {
   // Find closest region to hovered coordinates for contextual info
   const getHoverRegion = () => {
     if (!hoverCoords) return null;
-    return MOCK_REGIONS.reduce((closest, region) => {
+    return regions.reduce((closest, region) => {
       const dist = Math.hypot(region.lat - hoverCoords.lat, region.lng - hoverCoords.lng);
       const closestDist = closest ? Math.hypot(closest.lat - hoverCoords.lat, closest.lng - hoverCoords.lng) : Infinity;
       return dist < closestDist ? region : closest;
@@ -66,7 +65,7 @@ const TerraMap = () => {
         <ZoomControl position="topright" />
         <MouseTracker onMove={setHoverCoords} />
 
-        {MOCK_REGIONS.map((region) => (
+        {regions.map((region) => (
           <RegionMarker
             key={region.id}
             region={region}

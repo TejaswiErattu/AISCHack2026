@@ -49,6 +49,7 @@ async def get_financial(region_id: str, db: Session = Depends(get_db)):
     # Compute TerraLend dynamic values
     result = await _compute_terralend_financial(region)
     result["baseline_rate"] = baseline_rate
+    result["delta_from_baseline"] = round(result["interest_rate"] - baseline_rate, 2)
 
     return FinancialResponse(**result)
 

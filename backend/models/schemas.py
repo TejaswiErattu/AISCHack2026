@@ -8,6 +8,7 @@ class RegionResponse(BaseModel):
     lat: float
     lng: float
     primary_crop: str
+    stress_score: Optional[float] = None
 
     model_config = {"from_attributes": True}
 
@@ -18,6 +19,7 @@ class ClimateResponse(BaseModel):
     rainfall_anomaly: float
     ndvi_score: float = Field(ge=0, le=100)
     soil_moisture: float = Field(ge=0, le=100)
+    yield_stress_score: Optional[float] = None
 
     model_config = {"from_attributes": True}
 
@@ -35,6 +37,10 @@ class FinancialResponse(BaseModel):
     insurance_premium: float
     repayment_flexibility: float
     baseline_rate: float
+    rate_floor: float = 0.0
+    rate_ceiling: float = 0.0
+    repayment_months: int = 36
+    delta_from_baseline: float = 0.0
 
     model_config = {"from_attributes": True}
 

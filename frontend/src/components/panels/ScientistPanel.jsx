@@ -65,7 +65,7 @@ const ScientistPanel = ({
               <tr className="border-t border-accent-primary/30 text-accent-primary font-bold">
                 <td className="py-3">COMPOSITE SCORE</td>
                 <td colSpan="2"></td>
-                <td className="py-3 text-right text-[16px]">{climateData.yield_stress_score.toFixed(1)} / 100</td>
+                <td className="py-3 text-right text-[16px]">{(climateData?.yield_stress_score ?? 0).toFixed(1)} / 100</td>
               </tr>
             </tbody>
           </table>

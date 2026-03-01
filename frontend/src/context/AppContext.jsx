@@ -1,9 +1,9 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { 
-  MOCK_REGIONS, 
-  MOCK_CLIMATE, 
-  MOCK_FINANCIAL, 
-  MOCK_NARRATIVES 
+import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
+import {
+  MOCK_REGIONS,
+  MOCK_CLIMATE,
+  MOCK_FINANCIAL,
+  MOCK_NARRATIVES
 } from '../data/mockData';
 import { api } from '../api/client';
 
@@ -18,59 +18,104 @@ export const AppProvider = ({ children }) => {
   const [isDemoMode, setIsDemoMode] = useState(true); // Default to true for hackathon safety
 
   // --- Data State ---
+  const [regions, setRegions] = useState(MOCK_REGIONS);
   const [climateData, setClimateData] = useState(MOCK_CLIMATE);
   const [financialOutputs, setFinancialOutputs] = useState(MOCK_FINANCIAL);
   const [narratives, setNarratives] = useState(MOCK_NARRATIVES);
 
-  // --- Simulation State (Step 15 Logic) ---
+  // --- Simulation State ---
   const [simulatorValues, setSimulatorValues] = useState({
     temperature: 0,
     drought: 0,
     rainfall: 0
   });
 
+  // Debounce ref for simulator updates
+  const debounceRef = useRef(null);
+
+  // --- Fetch regions on mount ---
+  useEffect(() => {
+    const loadRegions = async () => {
+      const data = await api.getRegions(setIsDemoMode);
+      // Transform region_id → id for frontend compatibility
+      const transformed = data.map(r => ({
+        ...r,
+        id: r.region_id || r.id,
+      }));
+      setRegions(transformed);
+    };
+    loadRegions();
+  }, []);
+
   // --- Actions & Handlers ---
 
   // Map Overlay Toggle
   const toggleOverlay = (id) => {
-    setActiveOverlays(prev => 
+    setActiveOverlays(prev =>
       prev.includes(id) ? prev.filter(o => o !== id) : [...prev, id]
     );
   };
 
-  // Manual Simulator Updates
+  // Manual Simulator Updates (debounced)
   const updateSimulator = useCallback(async (key, val) => {
     const newValues = { ...simulatorValues, [key]: val };
     setSimulatorValues(newValues);
 
-    if (selectedRegion) {
-      // Trigger simulation update via API or Mock
-      const updatedFinancials = await api.simulate({
-        region_id: selectedRegion.id,
+    if (!selectedRegion) return;
+
+    // Debounce: cancel previous pending call
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      const result = await api.simulate({
+        region_id: selectedRegion.region_id || selectedRegion.id,
         ...newValues
       }, setIsDemoMode);
-      
-      setFinancialOutputs(updatedFinancials);
-    }
+
+      // Handle real API response shape: {baseline, simulated, stress_score, ...}
+      if (result && result.simulated) {
+        setFinancialOutputs(result.simulated);
+        setClimateData(prev => ({
+          ...prev,
+          yield_stress_score: result.stress_score ?? prev.yield_stress_score,
+        }));
+      } else {
+        // Mock fallback: result is already a flat financial object
+        setFinancialOutputs(result);
+      }
+    }, 300);
   }, [simulatorValues, selectedRegion]);
 
   // Preset Archetype Application
-  const applyPreset = useCallback((id) => {
+  const applyPreset = useCallback(async (id) => {
     const presets = {
       dust_bowl: { temperature: 4, drought: 90, rainfall: -70 },
       deluge: { temperature: -1, drought: 5, rainfall: 70 },
       frost: { temperature: -3, drought: 20, rainfall: -20 },
       baseline: { temperature: 0, drought: 0, rainfall: 0 }
     };
-    
+
     const selectedPreset = presets[id] || presets.baseline;
     setSimulatorValues(selectedPreset);
-    
-    // In a real run, you would trigger the simulation API here for the preset
-    if (selectedRegion) {
-      updateSimulator('temperature', selectedPreset.temperature);
+
+    if (!selectedRegion) return;
+
+    // Send all preset values in a single simulate call
+    const result = await api.simulate({
+      region_id: selectedRegion.region_id || selectedRegion.id,
+      ...selectedPreset
+    }, setIsDemoMode);
+
+    if (result && result.simulated) {
+      setFinancialOutputs(result.simulated);
+      setClimateData(prev => ({
+        ...prev,
+        yield_stress_score: result.stress_score ?? prev.yield_stress_score,
+      }));
+    } else {
+      setFinancialOutputs(result);
     }
-  }, [selectedRegion, updateSimulator]);
+  }, [selectedRegion]);
 
   const resetSimulator = () => applyPreset('baseline');
 
@@ -80,11 +125,16 @@ export const AppProvider = ({ children }) => {
 
     const loadRegionData = async () => {
       setIsLoading(true);
-      
+
+      const regionId = selectedRegion.region_id || selectedRegion.id;
+
       // Fetch core data
-      const climate = await api.getClimate(selectedRegion.id, setIsDemoMode);
-      const financial = await api.getFinancial(selectedRegion.id, setIsDemoMode);
-      const narrative = await api.getNarrative(selectedRegion.id, activePanel, setIsDemoMode);
+      const climate = await api.getClimate(regionId, setIsDemoMode);
+      const financial = await api.getFinancial(regionId, setIsDemoMode);
+      const narrativeResult = await api.getNarrative(regionId, activePanel, setIsDemoMode);
+
+      // Unwrap narrative: backend returns {panel, narrative}, mock returns plain string
+      const narrativeText = narrativeResult?.narrative ?? narrativeResult;
 
       // 800ms "Theatre" delay for Demo Mode to show skeletons
       if (isDemoMode) {
@@ -93,7 +143,7 @@ export const AppProvider = ({ children }) => {
 
       setClimateData(climate);
       setFinancialOutputs(financial);
-      setNarratives(prev => ({ ...prev, [activePanel]: narrative }));
+      setNarratives(prev => ({ ...prev, [activePanel]: narrativeText }));
       setIsLoading(false);
     };
 
@@ -107,11 +157,12 @@ export const AppProvider = ({ children }) => {
     activeOverlays,
     isLoading,
     isDemoMode,
+    regions,
     climateData,
     financialOutputs,
     narratives,
     simulatorValues,
-    
+
     // Setters/Handlers
     setSelectedRegion,
     setActivePanel,

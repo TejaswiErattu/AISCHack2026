@@ -20,10 +20,28 @@ def _get_region_or_404(region_id: str, db: Session) -> Region:
 
 
 @router.get("/regions", response_model=list[RegionResponse])
-def list_regions(db: Session = Depends(get_db)):
-    """List all selectable US agricultural regions."""
+async def list_regions(db: Session = Depends(get_db)):
+    """List all selectable US agricultural regions with computed stress scores."""
     regions = db.query(Region).all()
-    return regions
+    result = []
+    for region in regions:
+        climate = await get_climate_data(region.region_id, region.lat, region.lng)
+        stress = compute_yield_stress(
+            climate["temperature_anomaly"],
+            climate["drought_index"],
+            climate["rainfall_anomaly"],
+            climate["ndvi_score"],
+            climate["soil_moisture"],
+        )
+        result.append(RegionResponse(
+            region_id=region.region_id,
+            name=region.name,
+            lat=region.lat,
+            lng=region.lng,
+            primary_crop=region.primary_crop,
+            stress_score=stress,
+        ))
+    return result
 
 
 @router.get("/region/{region_id}/climate", response_model=ClimateResponse)
@@ -31,7 +49,14 @@ async def get_region_climate(region_id: str, db: Session = Depends(get_db)):
     """Get current climate data for a region."""
     region = _get_region_or_404(region_id, db)
     climate = await get_climate_data(region_id, region.lat, region.lng)
-    return ClimateResponse(**climate)
+    stress = compute_yield_stress(
+        climate["temperature_anomaly"],
+        climate["drought_index"],
+        climate["rainfall_anomaly"],
+        climate["ndvi_score"],
+        climate["soil_moisture"],
+    )
+    return ClimateResponse(**climate, yield_stress_score=stress)
 
 
 @router.get("/region/{region_id}/stress", response_model=StressResponse)
