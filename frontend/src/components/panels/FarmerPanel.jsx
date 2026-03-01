@@ -2,6 +2,8 @@ import React, { useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { useCountUp } from '../../hooks/useCountUp';
 import AINarrative from '../shared/AINarrative';
+import AIAdvisor from '../shared/AIAdvisor';
+
 
 const FarmerPanel = () => {
   const { financialOutputs, climateData, narratives, isLoading } = useContext(AppContext);
@@ -117,6 +119,7 @@ const FarmerPanel = () => {
         <p className="text-[15px] text-[#94A3B8] leading-[1.7] font-sans">
           {narratives.farmer}
         </p>
+        <AIAdvisor panel="farmer" />{/* New integration*/}
       </div>
     </div>
   );

@@ -1,8 +1,10 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { AppContext } from '../../context/AppContext';
 import { useCountUp } from '../../hooks/useCountUp';
+import { api } from '../../api/client';
 import StressGauge from '../shared/StressGauge';
 import AINarrative from '../shared/AINarrative';
+import AIAdvisor from '../shared/AIAdvisor';
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -29,11 +31,61 @@ const computeFactors = (climate) => {
 };
 
 const LoanOfficerPanel = () => {
-  const { financialOutputs, climateData, narratives, isLoading } = useContext(AppContext);
+  const { financialOutputs, climateData, narratives, isLoading, selectedRegion } = useContext(AppContext);
+  const [proposalText, setProposalText] = useState(null);
+  const [proposalLoading, setProposalLoading] = useState(false);
 
   const animatedRate = useCountUp(financialOutputs?.interest_rate ?? 0, 800);
   const animatedPD = useCountUp((financialOutputs?.probability_of_default ?? 0) * 100, 800);
   const factors = computeFactors(climateData);
+
+  const handleGenerateProposal = async () => {
+    if (!selectedRegion) return;
+    setProposalLoading(true);
+    try {
+      const regionId = selectedRegion.region_id || selectedRegion.id;
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/region/${regionId}/proposal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          region_name: selectedRegion.name,
+          primary_crop: selectedRegion.primary_crop,
+          yield_stress_score: climateData?.yield_stress_score,
+          interest_rate: financialOutputs?.interest_rate,
+          probability_of_default: (financialOutputs?.probability_of_default ?? 0) * 100,
+          insurance_premium: financialOutputs?.insurance_premium,
+          temperature_anomaly: climateData?.temperature_anomaly,
+          drought_index: climateData?.drought_index,
+          ndvi_score: climateData?.ndvi_score,
+        }),
+      });
+      const data = await response.json();
+      setProposalText(data.proposal);
+    } catch (err) {
+      console.error("Proposal generation failed:", err);
+      setProposalText("Error generating proposal. Please try again.");
+    } finally {
+      setProposalLoading(false);
+    }
+  };
+
+  const handleDownloadProposal = () => {
+    if (!proposalText) return;
+    const regionName = selectedRegion?.name || 'region';
+    const blob = new Blob([proposalText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `loan-proposal-${regionName.replace(/\s+/g, '-').toLowerCase()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportMemo = () => {
+    if (!selectedRegion) return;
+    const regionId = selectedRegion.region_id || selectedRegion.id;
+    window.open(api.getMemoUrl(regionId), '_blank');
+  };
 
   if (isLoading) return <LoanOfficerSkeleton />;
 
@@ -103,18 +155,55 @@ const LoanOfficerPanel = () => {
           <p className="text-[#94A3B8] text-[12px] leading-relaxed">
             {narratives?.loan_officer}
           </p>
+          <AIAdvisor panel="loan_officer" />{/* New integration*/}
         </div>
       </div>
 
       {/* 6. FUNCTION KEY ACTIONS */}
       <div className="flex gap-2 p-3 border-t border-[#1a1a1a]">
-        <button className="flex-1 bg-[#1a1a1a] border border-[#333333] py-1 text-[11px] hover:bg-[#222222] transition-colors">
-          <span className="text-[#00D4AA] mr-2">[F1]</span>GENERATE PROPOSAL
+        <button
+          onClick={handleGenerateProposal}
+          disabled={proposalLoading}
+          className="flex-1 bg-[#1a1a1a] border border-[#333333] py-1 text-[11px] hover:bg-[#222222] transition-colors disabled:opacity-50"
+        >
+          <span className="text-[#00D4AA] mr-2">[F1]</span>
+          {proposalLoading ? 'GENERATING...' : 'GENERATE PROPOSAL'}
         </button>
-        <button className="flex-1 bg-[#1a1a1a] border border-[#333333] py-1 text-[11px] hover:bg-[#222222] transition-colors">
+        <button
+          onClick={handleExportMemo}
+          className="flex-1 bg-[#1a1a1a] border border-[#333333] py-1 text-[11px] hover:bg-[#222222] transition-colors"
+        >
           <span className="text-[#00D4AA] mr-2">[F2]</span>EXPORT MEMO
         </button>
       </div>
+
+      {/* PROPOSAL MODAL */}
+      {proposalText && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="bg-[#0D1117] border border-[#333333] rounded max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-[#1a1a1a]">
+              <span className="text-[#00D4AA] text-[12px] font-bold">LOAN PROPOSAL</span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleDownloadProposal}
+                  className="text-[#F59E0B] hover:text-[#FBBF24] text-[11px] font-bold"
+                >
+                  [DOWNLOAD]
+                </button>
+                <button
+                  onClick={() => setProposalText(null)}
+                  className="text-[#475569] hover:text-[#F1F5F9] text-[14px]"
+                >
+                  [ESC]
+                </button>
+              </div>
+            </div>
+            <div className="p-4 overflow-y-auto text-[#94A3B8] text-[12px] leading-relaxed whitespace-pre-wrap">
+              {proposalText}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

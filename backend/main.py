@@ -1,6 +1,10 @@
+import json
+import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+import boto3
+from dotenv import load_dotenv
+from fastapi import Body, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.models.database import create_tables, SessionLocal
@@ -9,6 +13,10 @@ from backend.routes.regions import router as regions_router
 from backend.routes.financial import router as financial_router
 from backend.routes.simulation import router as simulation_router
 from backend.routes.narrative import router as narrative_router
+
+load_dotenv()
+
+bedrock = boto3.client("bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"))
 
 
 @asynccontextmanager
@@ -42,3 +50,56 @@ app.include_router(narrative_router)
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.post("/chat")
+async def chat(request: dict = Body(...)):
+    try:
+        body = json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 500,
+            "system": request.get("system", ""),
+            "messages": request.get("messages", []),
+        })
+        response = bedrock.invoke_model(
+            modelId="us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            body=body,
+        )
+        result = json.loads(response["body"].read())
+        return {"text": result["content"][0]["text"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/region/{region_id}/proposal")
+async def generate_proposal(region_id: str, request: dict = Body(...)):
+    try:
+        body = json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 1000,
+            "system": "You are a senior agricultural loan underwriter. Generate a formal loan proposal memo in professional financial language.",
+            "messages": [{
+                "role": "user",
+                "content": f"""Generate a formal agricultural loan proposal for:
+Region: {request.get('region_name')}
+Crop: {request.get('primary_crop')}
+Yield Stress Score: {request.get('yield_stress_score')}/100
+Interest Rate: {request.get('interest_rate')}%
+Probability of Default: {request.get('probability_of_default')}%
+Insurance Premium: ${request.get('insurance_premium')}/season
+Heat Stress: +{request.get('temperature_anomaly')}°C above norm
+Drought Index: {request.get('drought_index')}/100
+NDVI Health: {request.get('ndvi_score')}/100
+
+Include: executive summary, risk assessment, recommended terms, conditions, and climate risk disclosure. Professional tone. 400 words max."""
+            }]
+        })
+        response = bedrock.invoke_model(
+            modelId="us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            body=body,
+        )
+        result = json.loads(response["body"].read())
+        return {"proposal": result["content"][0]["text"]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

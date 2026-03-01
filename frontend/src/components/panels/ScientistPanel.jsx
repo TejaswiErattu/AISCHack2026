@@ -6,6 +6,7 @@ import {
 import { useCountUp } from '../../hooks/useCountUp';
 import AINarrative from '../shared/AINarrative';
 import { AppContext } from '../../context/AppContext';
+import AIAdvisor from '../shared/AIAdvisor';
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -115,7 +116,15 @@ const ScientistPanel = () => {
       </div>
 
       {/* 4. AI NARRATIVE (Scientific) */}
-      <AINarrative text={narrative} mode="technical" />
+      <div className="bg-[#0D1117] border border-[#1a1a1a] p-4 rounded-md">
+        <div className="text-[#10B981] text-[10px] mb-2 font-bold uppercase tracking-widest">
+          {'>'} Climate_Analysis_Output
+        </div>
+        <p className="text-[#94A3B8] text-[12px] leading-relaxed mb-3">
+          {narratives?.scientist}
+        </p>
+        <AIAdvisor panel="scientist" /> {/ New Integration */}
+      </div>
     </div>
   );
 };
