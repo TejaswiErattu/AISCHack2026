@@ -20,10 +20,11 @@ class BedrockClient:
         self._init_attempted = True
         try:
             import boto3
-            self._boto_client = boto3.client(
-                "bedrock-runtime",
-                region_name=os.getenv("AWS_REGION", "us-east-1"),
+            session = boto3.Session(
+                profile_name=os.getenv("AWS_PROFILE", "terralend"),
+                region_name=os.getenv("AWS_REGION", "us-west-2"),
             )
+            self._boto_client = session.client("bedrock-runtime")
         except Exception:
             self._boto_client = None
         return self._boto_client
@@ -47,7 +48,7 @@ class BedrockClient:
             "messages": [{"role": "user", "content": user_message}],
         })
         response = client.invoke_model(
-            modelId="anthropic.claude-3-5-sonnet-20241022-v2:0",
+            modelId=os.getenv("BEDROCK_MODEL", "anthropic.claude-3-5-haiku-20241022-v1:0"),
             body=body,
             contentType="application/json",
             accept="application/json",

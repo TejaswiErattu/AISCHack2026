@@ -3,6 +3,7 @@ import json
 import os
 import time as _time
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import boto3
 from dotenv import load_dotenv
@@ -16,9 +17,16 @@ from backend.routes.financial import router as financial_router
 from backend.routes.simulation import router as simulation_router
 from backend.routes.narrative import router as narrative_router
 
-load_dotenv()
+# Load .env from the backend directory
+load_dotenv(Path(__file__).parent / ".env")
 
-bedrock = boto3.client("bedrock-runtime", region_name=os.getenv("AWS_REGION", "us-east-1"))
+_session = boto3.Session(
+    profile_name=os.getenv("AWS_PROFILE", "terralend"),
+    region_name=os.getenv("AWS_REGION", "us-west-2"),
+)
+bedrock = _session.client("bedrock-runtime")
+
+BEDROCK_MODEL = os.getenv("BEDROCK_MODEL", "anthropic.claude-3-5-haiku-20241022-v1:0")
 
 # Proposal response cache: hash(request_body) -> (timestamp, response)
 _proposal_cache: dict[str, tuple[float, dict]] = {}
@@ -68,7 +76,7 @@ async def chat(request: dict = Body(...)):
             "messages": request.get("messages", []),
         })
         response = bedrock.invoke_model(
-            modelId="us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            modelId=BEDROCK_MODEL,
             body=body,
         )
         result = json.loads(response["body"].read())
@@ -111,7 +119,7 @@ Include: executive summary, risk assessment, recommended terms, conditions, and 
             }]
         })
         response = bedrock.invoke_model(
-            modelId="us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+            modelId=BEDROCK_MODEL,
             body=body,
         )
         result = json.loads(response["body"].read())
