@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { AppContext } from '../../context/AppContext';
 import LoanOfficerPanel from './LoanOfficerPanel';
 import FarmerPanel from './FarmerPanel';
-import ScientistPanel from './ScientistPanel';
 import SimulationLab from './SimulationLab';
 
 const PanelSwitcher = () => {
@@ -28,7 +27,6 @@ const PanelSwitcher = () => {
     switch (activePanel) {
       case 'loan_officer': return <LoanOfficerPanel />;
       case 'farmer': return <FarmerPanel />;
-      case 'scientist': return <ScientistPanel />;
       case 'simulation': return <SimulationLab />;
       default: return <LoanOfficerPanel />;
     }

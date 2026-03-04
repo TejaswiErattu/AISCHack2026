@@ -4,7 +4,6 @@ import { AppContext } from '../../context/AppContext';
 const TABS = [
   { id: 'loan_officer', label: 'Loan Officer', icon: '💼' },
   { id: 'farmer', label: 'Farmer', icon: '🚜' },
-  { id: 'scientist', label: 'Climate Scientist', icon: '🔬' },
   { id: 'simulation', label: 'Simulation Lab', icon: '⚡', isSpecial: true },
 ];
 
