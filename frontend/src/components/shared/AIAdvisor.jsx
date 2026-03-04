@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AppContext } from '../../context/AppContext';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 const AIAdvisor = ({ panel }) => {
   const { financialOutputs, climateData, selectedRegion } = useContext(AppContext);
   const [questions, setQuestions] = useState([]);
@@ -20,7 +22,7 @@ const AIAdvisor = ({ panel }) => {
     const generateQuestions = async () => {
       setIsGeneratingQuestions(true);
       try {
-        const response = await fetch("http://localhost:8000/chat", {
+        const response = await fetch(`${API_BASE}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -60,7 +62,7 @@ const AIAdvisor = ({ panel }) => {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/chat", {
+      const response = await fetch(`${API_BASE}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
