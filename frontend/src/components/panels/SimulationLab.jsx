@@ -46,21 +46,21 @@ const SimulationLab = ({ regionId, financialOutputs }) => {
 
 // --- STATE 1: IDLE ---
 const IdleState = ({ onRun, region }) => (
-  <div className="h-full flex flex-col items-center justify-center text-center p-8 animate-fade-in">
+  <div className="h-full flex flex-col items-center justify-center text-center p-4 sm:p-8 animate-fade-in">
     {region && (
-      <span className="text-[11px] font-bold text-accent-primary uppercase tracking-[0.2em] mb-2">
+      <span className="text-[10px] sm:text-[11px] font-bold text-accent-primary uppercase tracking-[0.2em] mb-2">
         {region.name} • {region.primary_crop}
       </span>
     )}
-    <h2 className="text-[24px] font-bold text-text-primary mb-4">Climate Stress Test</h2>
-    <p className="text-[14px] text-text-muted max-w-[360px] leading-relaxed mb-8">
+    <h2 className="text-[20px] sm:text-[24px] font-bold text-text-primary mb-3 sm:mb-4">Climate Stress Test</h2>
+    <p className="text-[12px] sm:text-[14px] text-text-muted max-w-[360px] leading-relaxed mb-6 sm:mb-8">
       Run this farm through 4 decades of climate scenarios. See exactly how volatile conditions reshape this loan.
     </p>
     <button
       onClick={onRun}
       disabled={!region}
       className={`
-        h-[52px] w-[240px] rounded-[12px] font-bold text-[16px] transition-all
+        h-[44px] sm:h-[52px] w-[200px] sm:w-[240px] rounded-[12px] font-bold text-[14px] sm:text-[16px] transition-all
         ${region
           ? 'bg-gradient-to-r from-accent-primary to-accent-financial text-background-primary shadow-glow-teal hover:scale-105 active:scale-95'
           : 'bg-background-elevated text-text-muted cursor-not-allowed border border-border'}
@@ -68,7 +68,7 @@ const IdleState = ({ onRun, region }) => (
     >
       ▶ Run Climate Stress Test
     </button>
-    <p className="mt-4 text-[11px] text-text-muted uppercase tracking-widest">
+    <p className="mt-3 sm:mt-4 text-[10px] sm:text-[11px] text-text-muted uppercase tracking-widest">
       4 climate archetypes · ~3 seconds
     </p>
   </div>
@@ -84,8 +84,8 @@ const RunningState = ({ steps }) => {
   ];
 
   return (
-    <div className="h-full flex flex-col justify-center p-10 animate-fade-in">
-      <div className="space-y-6">
+    <div className="h-full flex flex-col justify-center p-6 sm:p-10 animate-fade-in">
+      <div className="space-y-4 sm:space-y-6">
         {progressRows.map((row, i) => (
           <div key={row.label} className={`flex items-center gap-4 transition-all duration-500 ${steps > i ? 'opacity-100' : 'opacity-20'}`}>
             <div className="w-5 h-5 flex items-center justify-center">
@@ -140,27 +140,27 @@ const ResultsState = ({ data, onReset, onDownload }) => {
         ))}
       </div>
 
-      <div className="bg-[#111827] border-t-2 border-accent-primary p-6 rounded-b-card shadow-xl">
-        <h3 className="text-[11px] font-bold text-accent-primary uppercase tracking-widest mb-6">
+      <div className="bg-[#111827] border-t-2 border-accent-primary p-4 sm:p-6 rounded-b-card shadow-xl">
+        <h3 className="text-[10px] sm:text-[11px] font-bold text-accent-primary uppercase tracking-widest mb-4 sm:mb-6">
           Climate Resilience Report
         </h3>
 
-        <div className="flex gap-8 mb-8">
+        <div className="flex gap-4 sm:gap-8 mb-6 sm:mb-8">
           <div className="flex flex-col">
-            <p className="text-[10px] uppercase text-text-muted font-bold tracking-tight mb-1">Best Case</p>
-            <p className="text-[32px] font-mono font-bold text-accent-positive leading-none">{bestRate.toFixed(1)}%</p>
+            <p className="text-[9px] sm:text-[10px] uppercase text-text-muted font-bold tracking-tight mb-1">Best Case</p>
+            <p className="text-[22px] sm:text-[32px] font-mono font-bold text-accent-positive leading-none">{bestRate.toFixed(1)}%</p>
           </div>
           <div className="flex flex-col">
-            <p className="text-[10px] uppercase text-text-muted font-bold tracking-tight mb-1">Most Likely</p>
-            <p className="text-[32px] font-mono font-bold text-accent-warning leading-none">{avgRate.toFixed(1)}%</p>
+            <p className="text-[9px] sm:text-[10px] uppercase text-text-muted font-bold tracking-tight mb-1">Most Likely</p>
+            <p className="text-[22px] sm:text-[32px] font-mono font-bold text-accent-warning leading-none">{avgRate.toFixed(1)}%</p>
           </div>
           <div className="flex flex-col">
-            <p className="text-[10px] uppercase text-text-muted font-bold tracking-tight mb-1">Worst Case</p>
-            <p className="text-[32px] font-mono font-bold text-accent-danger leading-none">{worstRate.toFixed(1)}%</p>
+            <p className="text-[9px] sm:text-[10px] uppercase text-text-muted font-bold tracking-tight mb-1">Worst Case</p>
+            <p className="text-[22px] sm:text-[32px] font-mono font-bold text-accent-danger leading-none">{worstRate.toFixed(1)}%</p>
           </div>
         </div>
 
-        <div className="border-t border-border/20 pt-4 flex items-center gap-6 mb-6 font-mono text-[12px]">
+        <div className="border-t border-border/20 pt-4 flex flex-wrap items-center gap-4 sm:gap-6 mb-6 font-mono text-[10px] sm:text-[12px]">
           <div className="flex items-center gap-2">
             <span className="text-text-muted">Floor</span>
             <span className="text-text-muted opacity-30">──</span>
@@ -208,16 +208,16 @@ const ScenarioCard = ({ scenario, index }) => {
 
   return (
     <div
-      className="flex items-center h-[36px] px-2 border-b border-border/10 hover:bg-white/[0.02] transition-colors"
+      className="flex items-center h-auto sm:h-[36px] px-2 py-2 sm:py-0 border-b border-border/10 hover:bg-white/[0.02] transition-colors flex-wrap sm:flex-nowrap"
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <div
-        className="w-2 h-2 rounded-full mr-4 shrink-0"
+        className="w-2 h-2 rounded-full mr-3 sm:mr-4 shrink-0"
         style={{ backgroundColor: scenario.color }}
       />
-      <div className="flex items-center flex-1 font-mono text-[12px]">
-        <span className="text-text-primary font-bold w-40 truncate">{scenario.name}</span>
-        <div className="flex items-center gap-4 text-text-muted">
+      <div className="flex flex-col sm:flex-row sm:items-center flex-1 font-mono text-[11px] sm:text-[12px] min-w-0">
+        <span className="text-text-primary font-bold sm:w-40 truncate">{scenario.name}</span>
+        <div className="flex items-center gap-3 sm:gap-4 text-text-muted">
           <div className="flex items-center gap-1">
             <span className="opacity-50">Rate:</span>
             <span className="text-text-secondary font-bold">{rate.toFixed(1)}%</span>
@@ -233,7 +233,7 @@ const ScenarioCard = ({ scenario, index }) => {
         </div>
       </div>
       <span
-        className="text-[11px] font-bold shrink-0 font-mono"
+        className="text-[10px] sm:text-[11px] font-bold shrink-0 font-mono ml-auto sm:ml-0"
         style={{ color: scenario.color }}
       >
         {severity}

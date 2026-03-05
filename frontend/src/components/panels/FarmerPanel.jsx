@@ -50,24 +50,24 @@ const FarmerPanel = () => {
   if (isLoading) return <div className="animate-pulse bg-[#0a0a0a] h-full" />;
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a] text-white font-sans animate-panel-entry p-4">
+    <div className="flex flex-col h-full bg-[#0a0a0a] text-white font-sans animate-panel-entry p-3 sm:p-4">
       
       {/* 1. CASH APP STYLE HERO RATE SECTION */}
-      <div className="bg-[#1c1c1e] rounded-[24px] p-8 mb-6 flex flex-col items-center">
-        <span className="text-[13px] text-[#94A3B8] font-medium mb-1">Your Rate Today</span>
-        <div className="flex items-baseline mb-4">
-          <span className="text-[72px] font-bold leading-none tracking-tight">
+      <div className="bg-[#1c1c1e] rounded-[16px] sm:rounded-[24px] p-4 sm:p-8 mb-4 sm:mb-6 flex flex-col items-center">
+        <span className="text-[11px] sm:text-[13px] text-[#94A3B8] font-medium mb-1">Your Rate Today</span>
+        <div className="flex items-baseline mb-2 sm:mb-4">
+          <span className="text-[48px] sm:text-[72px] font-bold leading-none tracking-tight">
             {animatedRate.toFixed(1)}%
           </span>
         </div>
         
         {/* Wise-style inline comparison */}
-        <div className="w-full border-t border-[#2c2c2e] pt-4 mt-2 space-y-1">
-          <div className="flex justify-between text-[13px]">
+        <div className="w-full border-t border-[#2c2c2e] pt-3 sm:pt-4 mt-2 space-y-1">
+          <div className="flex justify-between text-[11px] sm:text-[13px]">
             <span className="text-[#94A3B8]">Without TerraLend you'd pay</span>
             <span className="text-[#94A3B8] line-through">{financialOutputs.baseline_rate}%</span>
           </div>
-          <div className="flex justify-between text-[13px]">
+          <div className="flex justify-between text-[11px] sm:text-[13px]">
             <span className="text-white">Climate impact adjustment</span>
             <span className={isRateHigher ? 'text-[#EF4444]' : 'text-[#10B981]'}>
               {isRateHigher ? '+' : '-'}{Math.abs(financialOutputs.delta_from_baseline).toFixed(1)}%
@@ -77,18 +77,18 @@ const FarmerPanel = () => {
       </div>
 
       {/* 2. WISE STYLE IMPACT ROWS */}
-      <div className="flex flex-col mb-8">
-        <h3 className="text-[10px] text-[#475569] font-bold uppercase tracking-[0.2em] mb-4 ml-1">
+      <div className="flex flex-col mb-4 sm:mb-8">
+        <h3 className="text-[9px] sm:text-[10px] text-[#475569] font-bold uppercase tracking-[0.2em] mb-3 sm:mb-4 ml-1">
           What's affecting your rate
         </h3>
         <div className="flex flex-col">
           {getImpactFactors().map((factor) => (
-            <div key={factor.id} className="flex items-center py-4 border-b border-[#1E3A5F]/30 last:border-0 h-[64px]">
-              <div className="w-[40px] text-xl">{factor.icon}</div>
-              <div className="flex-1">
-                <p className="text-[14px] text-[#F1F5F9] font-medium leading-tight">{factor.text}</p>
+            <div key={factor.id} className="flex items-center py-2.5 sm:py-4 border-b border-[#1E3A5F]/30 last:border-0 h-auto sm:h-[64px]">
+              <div className="w-[28px] sm:w-[40px] text-base sm:text-xl">{factor.icon}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] sm:text-[14px] text-[#F1F5F9] font-medium leading-tight truncate">{factor.text}</p>
               </div>
-              <div className={`text-[11px] font-bold font-mono ${factor.color}`}>
+              <div className={`text-[10px] sm:text-[11px] font-bold font-mono ml-2 shrink-0 ${factor.color}`}>
                 {factor.impact}
               </div>
             </div>

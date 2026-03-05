@@ -87,10 +87,10 @@ const AIAdvisor = ({ panel }) => {
     <div className={`w-full ${isTerminal ? 'border-t border-[#1a1a1a] mt-3 pt-3' : 'border-t border-white/10 mt-3 pt-3'}`}>
 
       {/* 1. Suggested Question Chips */}
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
         {isGeneratingQuestions ? (
           [1, 2, 3].map(i => (
-            <div key={i} className="h-6 w-32 bg-[#1a1a1a] animate-pulse rounded-sm" />
+            <div key={i} className="h-6 w-24 sm:w-32 bg-[#1a1a1a] animate-pulse rounded-sm" />
           ))
         ) : (
           questions.map((q, i) => (
@@ -98,8 +98,8 @@ const AIAdvisor = ({ panel }) => {
               key={i}
               onClick={() => askQuestion(q)}
               className={isTerminal
-                ? "bg-[#111] border border-[#333] text-[#475569] font-mono text-[10px] px-2 py-1 hover:border-[#00D4AA] hover:text-[#00D4AA] transition-colors"
-                : "bg-[#1E2D45] rounded-full text-[#94A3B8] text-[12px] px-3 py-1 hover:bg-[#00D4AA]/10 hover:text-[#00D4AA] transition-colors"
+                ? "bg-[#111] border border-[#333] text-[#475569] font-mono text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-1 hover:border-[#00D4AA] hover:text-[#00D4AA] transition-colors"
+                : "bg-[#1E2D45] rounded-full text-[#94A3B8] text-[10px] sm:text-[12px] px-2 sm:px-3 py-1 hover:bg-[#00D4AA]/10 hover:text-[#00D4AA] transition-colors"
               }
             >
               {q}
@@ -109,7 +109,7 @@ const AIAdvisor = ({ panel }) => {
       </div>
 
       {/* 2. Chat History */}
-      <div className="space-y-3 overflow-y-auto max-h-[250px] pr-1">
+      <div className="space-y-3 overflow-y-auto max-h-[180px] sm:max-h-[250px] pr-1">
         {conversation.map((msg, i) => (
           <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
             <p className={`

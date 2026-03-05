@@ -17,10 +17,10 @@ const ClimateSimulator = () => {
   const animatedImpact = useCountUp(financialOutputs?.delta_from_baseline ?? 0, 400);
 
   return (
-    <div className="h-[140px] w-full bg-background-secondary border-t border-border px-6 py-4 flex items-center gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-[3000]">
+    <div className="w-full bg-background-secondary border-t border-border px-3 sm:px-6 py-3 sm:py-4 flex flex-col lg:flex-row items-stretch lg:items-center gap-3 lg:gap-8 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-[3000]">
       
-      {/* LEFT: SLIDERS (3 Column Grid) */}
-      <div className="flex-1 grid grid-cols-3 gap-6 pr-8 border-r border-border/50">
+      {/* LEFT: SLIDERS */}
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 lg:pr-8 lg:border-r border-border/50">
         <StressSlider 
           label="Temp Anomaly" 
           value={simulatorValues.temperature} 
@@ -47,36 +47,39 @@ const ClimateSimulator = () => {
         />
       </div>
 
-      {/* CENTER: PRESET TOGGLES */}
-      <div className="w-[300px] flex flex-col gap-3">
-        <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Climate Archetypes</h4>
-        <PresetButtons />
-      </div>
-
-      {/* RIGHT: IMPACT SUMMARY */}
-      <div className="w-[240px] bg-background-primary/50 rounded-card border border-border p-3 flex flex-col justify-between relative">
-        <div className="flex justify-between items-start">
-          <span className="text-[10px] font-bold text-text-muted uppercase">Simulation Impact</span>
-          <button 
-            onClick={resetSimulator}
-            className="text-[10px] text-accent-primary hover:underline font-bold uppercase tracking-tighter"
-          >
-            ↺ Reset
-          </button>
+      {/* CENTER + RIGHT row on mobile */}
+      <div className="flex flex-row sm:flex-row lg:flex-row gap-3 lg:gap-8">
+        {/* PRESET TOGGLES */}
+        <div className="flex-1 lg:w-[300px] flex flex-col gap-2 lg:gap-3">
+          <h4 className="text-[9px] sm:text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Climate Archetypes</h4>
+          <PresetButtons />
         </div>
-        
-        <div className="space-y-1 mt-2">
-          <div className="flex justify-between items-baseline">
-            <span className="text-[11px] text-text-secondary">Stress Score</span>
-            <span className="font-mono text-[14px] font-bold text-accent-danger">
-              {(climateData?.yield_stress_score ?? 0).toFixed(1)} → {Math.round((climateData?.yield_stress_score ?? 0) + (animatedImpact * 10))}
-            </span>
+
+        {/* IMPACT SUMMARY */}
+        <div className="flex-1 lg:w-[240px] bg-background-primary/50 rounded-card border border-border p-2 sm:p-3 flex flex-col justify-between relative">
+          <div className="flex justify-between items-start">
+            <span className="text-[9px] sm:text-[10px] font-bold text-text-muted uppercase">Impact</span>
+            <button 
+              onClick={resetSimulator}
+              className="text-[9px] sm:text-[10px] text-accent-primary hover:underline font-bold uppercase tracking-tighter"
+            >
+              ↺ Reset
+            </button>
           </div>
-          <div className="flex justify-between items-baseline">
-            <span className="text-[11px] text-text-secondary">Interest Rate</span>
-            <span className="font-mono text-[14px] font-bold text-accent-danger">
-              {financialOutputs.interest_rate}% <span className="text-[11px]">↑+{animatedImpact.toFixed(1)}%</span>
-            </span>
+          
+          <div className="space-y-1 mt-1 sm:mt-2">
+            <div className="flex justify-between items-baseline">
+              <span className="text-[10px] sm:text-[11px] text-text-secondary">Stress</span>
+              <span className="font-mono text-[12px] sm:text-[14px] font-bold text-accent-danger">
+                {(climateData?.yield_stress_score ?? 0).toFixed(1)} → {Math.round((climateData?.yield_stress_score ?? 0) + (animatedImpact * 10))}
+              </span>
+            </div>
+            <div className="flex justify-between items-baseline">
+              <span className="text-[10px] sm:text-[11px] text-text-secondary">Rate</span>
+              <span className="font-mono text-[12px] sm:text-[14px] font-bold text-accent-danger">
+                {financialOutputs.interest_rate}% <span className="text-[10px] sm:text-[11px]">↑+{animatedImpact.toFixed(1)}%</span>
+              </span>
+            </div>
           </div>
         </div>
       </div>

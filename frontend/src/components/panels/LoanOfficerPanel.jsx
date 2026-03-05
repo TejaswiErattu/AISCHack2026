@@ -112,19 +112,19 @@ const LoanOfficerPanel = () => {
       </div>
 
       {/* 2. RISK GAUGE SECTION */}
-      <div className="flex justify-between items-start p-4 bg-black">
-        <div className="flex flex-col">
-          <h2 className="text-[#94A3B8] text-[12px] uppercase tracking-tighter">Current Risk Assessment</h2>
-          <div className="text-[10px] text-[#475569] mt-1">VOL: 1.8MMM | SOURCE: TERRALEND</div>
+      <div className="flex justify-between items-start p-3 sm:p-4 bg-black">
+        <div className="flex flex-col min-w-0">
+          <h2 className="text-[#94A3B8] text-[10px] sm:text-[12px] uppercase tracking-tighter">Current Risk Assessment</h2>
+          <div className="text-[8px] sm:text-[10px] text-[#475569] mt-1 truncate">VOL: 1.8MMM | SOURCE: TERRALEND</div>
         </div>
-        <div className="transform scale-90 origin-top-right">
+        <div className="transform scale-75 sm:scale-90 origin-top-right shrink-0">
           <StressGauge score={climateData?.yield_stress_score ?? 0} />
         </div>
       </div>
 
       {/* 3. BLOOMBERG DATA TABLE */}
       <div className="w-full border-t border-[#1a1a1a]">
-        <div className="grid grid-cols-12 bg-[#0D1117] py-1 px-3 text-[10px] text-[#475569] uppercase font-bold">
+        <div className="grid grid-cols-12 bg-[#0D1117] py-1 px-2 sm:px-3 text-[8px] sm:text-[10px] text-[#475569] uppercase font-bold">
           <div className="col-span-5">Risk Factor</div>
           <div className="col-span-4 text-right">Value</div>
           <div className="col-span-3 text-right">Delta</div>
@@ -139,9 +139,9 @@ const LoanOfficerPanel = () => {
       </div>
 
       {/* 4. DOMINANT RISK FACTORS */}
-      <div className="mt-6 px-3">
-        <div className="text-[11px] text-[#475569] mb-2 border-b border-[#1a1a1a] pb-1">RISK_FACTOR_CONTRIBUTION</div>
-        <div className="space-y-1 text-[11px]">
+      <div className="mt-4 sm:mt-6 px-2 sm:px-3">
+        <div className="text-[9px] sm:text-[11px] text-[#475569] mb-2 border-b border-[#1a1a1a] pb-1">RISK_FACTOR_CONTRIBUTION</div>
+        <div className="space-y-1 text-[9px] sm:text-[11px]">
           {factors.map(f => (
             <FactorRow key={f.label} label={f.label} val={f.val.toFixed(1)} pct={f.pct} color={f.color} />
           ))}
@@ -149,10 +149,10 @@ const LoanOfficerPanel = () => {
       </div>
 
       {/* 5. TERMINAL NARRATIVE */}
-      <div className="mt-auto p-3">
-        <div className="bg-[#0D1117] border border-[#1a1a1a] p-3">
-          <div className="text-[#10B981] text-[10px] mb-2 font-bold">{'>'} RISK_ANALYSIS_ENGINE</div>
-          <p className="text-[#94A3B8] text-[12px] leading-relaxed">
+      <div className="mt-auto p-2 sm:p-3">
+        <div className="bg-[#0D1117] border border-[#1a1a1a] p-2 sm:p-3">
+          <div className="text-[#10B981] text-[9px] sm:text-[10px] mb-2 font-bold">{'>'} RISK_ANALYSIS_ENGINE</div>
+          <p className="text-[#94A3B8] text-[10px] sm:text-[12px] leading-relaxed">
             {narratives?.loan_officer}
           </p>
           <AIAdvisor panel="loan_officer" />{/* New integration*/}
@@ -160,20 +160,20 @@ const LoanOfficerPanel = () => {
       </div>
 
       {/* 6. FUNCTION KEY ACTIONS */}
-      <div className="flex gap-2 p-3 border-t border-[#1a1a1a]">
+      <div className="flex gap-2 p-2 sm:p-3 border-t border-[#1a1a1a]">
         <button
           onClick={handleGenerateProposal}
           disabled={proposalLoading}
-          className="flex-1 bg-[#1a1a1a] border border-[#333333] py-1 text-[11px] hover:bg-[#222222] transition-colors disabled:opacity-50"
+          className="flex-1 bg-[#1a1a1a] border border-[#333333] py-1 text-[9px] sm:text-[11px] hover:bg-[#222222] transition-colors disabled:opacity-50"
         >
-          <span className="text-[#00D4AA] mr-2">[F1]</span>
+          <span className="text-[#00D4AA] mr-1 sm:mr-2">[F1]</span>
           {proposalLoading ? 'GENERATING...' : 'GENERATE PROPOSAL'}
         </button>
         <button
           onClick={handleExportMemo}
-          className="flex-1 bg-[#1a1a1a] border border-[#333333] py-1 text-[11px] hover:bg-[#222222] transition-colors"
+          className="flex-1 bg-[#1a1a1a] border border-[#333333] py-1 text-[9px] sm:text-[11px] hover:bg-[#222222] transition-colors"
         >
-          <span className="text-[#00D4AA] mr-2">[F2]</span>EXPORT MEMO
+          <span className="text-[#00D4AA] mr-1 sm:mr-2">[F2]</span>EXPORT MEMO
         </button>
       </div>
 
@@ -209,8 +209,8 @@ const LoanOfficerPanel = () => {
 };
 
 const TableRow = ({ label, value, delta, isEven, isPercent }) => (
-  <div className={`grid grid-cols-12 py-1.5 px-3 text-[12px] ${isEven ? 'bg-[#080808]' : 'bg-black'}`}>
-    <div className="col-span-5 text-[#94A3B8]">{label}</div>
+  <div className={`grid grid-cols-12 py-1.5 px-2 sm:px-3 text-[10px] sm:text-[12px] ${isEven ? 'bg-[#080808]' : 'bg-black'}`}>
+    <div className="col-span-5 text-[#94A3B8] truncate">{label}</div>
     <div className="col-span-4 text-right font-bold text-[#F1F5F9]">{value}</div>
     <div className={`col-span-3 text-right ${delta > 0 ? 'text-[#EF4444]' : delta < 0 ? 'text-[#10B981]' : 'text-[#475569]'}`}>
       {delta !== 0 && (delta > 0 ? '▲' : '▼')} {delta !== 0 && (isPercent ? `+${delta}%` : delta)}
